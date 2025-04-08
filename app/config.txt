@@ -1,10 +1,8 @@
-exposure_value = 0.0
 perc_top = 0.4
-perc_bottom = 0.8
-min_score = 0.5
-limit_center = 8.0
-sec_run_model = 0.4
-wait_key = 16.0
-square_size = 1380
-grid_x = 55
-grid_y = 5
+perc_bottom = 0.55
+min_score = 0.0
+limit_center = 0
+square_size = 1
+grid_x = 1380
+grid_y = 55
+crop_image = 5

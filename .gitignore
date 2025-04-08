@@ -6,6 +6,7 @@ data/inputs/ia_models/
 data/inputs/videos/
 data/outputs/
 data/videos/
+data/train_images
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

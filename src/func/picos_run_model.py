@@ -9,10 +9,7 @@ def run_model(torch_device, type_model, model, frame):
         detections = results[0].boxes  # Obter as detecções
 
         # Extrair boxes e scores em um único loop
-        detections_info = [
-            (detection.xyxy[0].tolist(), float(detection.conf))
-            for detection in detections
-        ]
+        detections_info = [(detection.xyxy[0].tolist(), float(detection.conf)) for detection in detections]
         
         boxes, scores = (zip(*detections_info) if detections_info else ([], []))  # Separar os boxes e scores em variáveis distintas
 

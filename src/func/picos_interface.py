@@ -13,6 +13,9 @@ def load_settings(config_path):
     sec_run_model = 0.4
     wait_key = 16  # Valor padrão
     save_dir = 'data\outputs\capturas'
+    square_size = 640
+    grid_x = 0
+    grid_y = 0
 
     arquivo = config_path
     try:
@@ -41,6 +44,12 @@ def load_settings(config_path):
                         wait_key = int(valor)  # Atribui diretamente
                     elif chave == 'save_dir':
                         save_dir = valor
+                    elif chave == 'square_size':
+                        square_size = int(valor)
+                    elif chave == 'grid_x':
+                        grid_x = int(valor)
+                    elif chave == 'grid_y':
+                        grid_y = int(valor)
     except Exception as e:
         print(f'Erro ao ler o arquivo: {e}')
 
@@ -53,11 +62,15 @@ def load_settings(config_path):
         sec_run_model,
         wait_key,
         save_dir,
+        square_size,
+        grid_x,
+        grid_y,
     )
 
 
 def save_settings(config_path, exposure_value, perc_top, 
-                  perc_bottom, min_score, limit_center, sec_run_model, wait_key, save_dir):
+                 perc_bottom, min_score, limit_center, sec_run_model, 
+                 wait_key, save_dir, square_size, grid_x, grid_y):
     """Função para salvar as configurações atuais diretamente nas variáveis no arquivo .txt."""
     arquivo = config_path
     try:
@@ -69,6 +82,9 @@ def save_settings(config_path, exposure_value, perc_top,
             file.write(f'limit_center = {limit_center}\n')
             file.write(f'sec_run_model = {sec_run_model}\n')
             file.write(f'wait_key = {wait_key}\n')
+            file.write(f'square_size = {square_size}\n')
+            file.write(f'grid_x = {grid_x}\n')
+            file.write(f'grid_y = {grid_y}\n')
             
             # Verifica se o save_dir não é None antes de salvar
             if save_dir is not None:
@@ -80,8 +96,26 @@ def save_settings(config_path, exposure_value, perc_top,
 
 
 def start_application_interface(config_path):
-    global linha, device_name, device_path, option_visualize, exposure_value, perc_top, \
-                perc_bottom, min_score, limit_center, save_dir, sec_run_model, wait_key
+    # Dicionário para armazenar os resultados que serão retornados
+    result = {
+        'linha': None,
+        'device_name': None,
+        'device_path': None,
+        'option_visualize': None,
+        'exposure_value': None,
+        'perc_top': None,
+        'perc_bottom': None,
+        'min_score': None,
+        'limit_center': None,
+        'save_dir': None,
+        'sec_run_model': None,
+        'wait_key': None,
+        'square_size': None,
+        'grid_x': None,
+        'grid_y': None,
+        'camera_backend': None  # Novo campo para o backend da câmera
+    }
+
     (
         exposure_value,
         perc_top,
@@ -91,12 +125,12 @@ def start_application_interface(config_path):
         sec_run_model,
         wait_key,
         save_dir,
+        square_size,
+        grid_x,
+        grid_y,
     ) = load_settings(config_path)
     
     def submit():
-        global linha, device_name, device_path, option_visualize, exposure_value, perc_top, \
-                perc_bottom, min_score, limit_center, save_dir, sec_run_model, wait_key
-        
         # Validação dos campos obrigatórios
         if not linha_entry.get():
             messagebox.showerror("Erro", "O campo 'Linha' não pode estar vazio.")
@@ -106,6 +140,18 @@ def start_application_interface(config_path):
             return
         if not device_path_var.get():
             messagebox.showerror("Erro", "O campo 'Câmera/Vídeo' não pode estar vazio.")
+            return
+        if not camera_backend_var.get():
+            messagebox.showerror("Erro", "Você deve selecionar um backend para a câmera (OpenCV ou GxCam).")
+            return
+        if not square_size_entry.get():
+            messagebox.showerror("Erro", "O campo 'Tamanho da área de interesse' não pode estar vazio.")
+            return
+        if not grid_x_entry.get():
+            messagebox.showerror("Erro", "O campo 'Localização em X' não pode estar vazio.")
+            return
+        if not grid_y_entry.get():
+            messagebox.showerror("Erro", "O campo 'Localização em Y' não pode estar vazio.")
             return
         if not exposure_value_entry.get():
             messagebox.showerror("Erro", "O campo 'Valor de exposição' não pode estar vazio.")
@@ -129,24 +175,28 @@ def start_application_interface(config_path):
             messagebox.showerror("Erro", "O campo 'Tempo de espera para tecla' não pode estar vazio.")
             return
 
-        # Preenche as variáveis com os valores dos campos
-        linha = linha_entry.get()
-        device_name = device_name_entry.get()
-        device_path = device_path_var.get()
-        option_visualize = int(option_var.get())
-        exposure_value = float(exposure_value_entry.get())
-        perc_top = float(perc_top_entry.get())
-        perc_bottom = float(perc_bottom_entry.get())
-        min_score = float(min_score_entry.get())
-        limit_center = int(limit_center_entry.get())
-        sec_run_model = float(sec_run_model_entry.get())
-        wait_key = int(wait_key_entry.get())
+        # Preenche o dicionário result com os valores dos campos
+        result['linha'] = linha_entry.get()
+        result['device_name'] = device_name_entry.get()
+        result['device_path'] = device_path_var.get()
+        result['option_visualize'] = int(option_var.get())
+        result['exposure_value'] = float(exposure_value_entry.get())
+        result['perc_top'] = float(perc_top_entry.get())
+        result['perc_bottom'] = float(perc_bottom_entry.get())
+        result['min_score'] = float(min_score_entry.get())
+        result['limit_center'] = int(limit_center_entry.get())
+        result['sec_run_model'] = float(sec_run_model_entry.get())
+        result['wait_key'] = int(wait_key_entry.get())
+        result['square_size'] = int(square_size_entry.get())
+        result['grid_x'] = int(grid_x_entry.get())
+        result['grid_y'] = int(grid_y_entry.get())
+        result['camera_backend'] = camera_backend_var.get()
         
         # Verifica a opção de salvar detecções
         if not save_detection_var.get():  # Caso "Não salvar detecções" esteja marcado
-            save_dir = save_dir_var.get()
+            result['save_dir'] = save_dir_var.get()
         else:
-            save_dir = None
+            result['save_dir'] = None
             
         root.destroy()  # Fecha a janela após obter os valores
     
@@ -193,93 +243,149 @@ def start_application_interface(config_path):
     # Botão para procurar um arquivo de vídeo
     tk.Button(root, text="Procurar", command=browse_file, width=10).grid(row=2, column=2, padx=pad_x, pady=pad_y)
     
+    # Seleção de backend da câmera
+    tk.Label(root, text="Backend da Câmera:", anchor='w', width=30).grid(row=3, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    camera_backend_var = tk.StringVar(value="")
+    frame_backend = tk.Frame(root)
+    frame_backend.grid(row=3, column=1, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Radiobutton(frame_backend, text="OpenCV", variable=camera_backend_var, value="OpenCV").pack(side='left')
+    tk.Radiobutton(frame_backend, text="GxCam", variable=camera_backend_var, value="GxCam").pack(side='left')
+    
     # Opção de visualização
-    tk.Label(root, text="Visualizar predições:", anchor='w', width=30).grid(row=3, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Visualizar predições:", anchor='w', width=30).grid(row=4, column=0, padx=pad_x, pady=pad_y, sticky='w')
     option_var = tk.StringVar(value=1)
     frame_options = tk.Frame(root)
-    frame_options.grid(row=3, column=1, padx=pad_x, pady=pad_y, sticky='w')
+    frame_options.grid(row=4, column=1, padx=pad_x, pady=pad_y, sticky='w')
     tk.Radiobutton(frame_options, text="Sim", variable=option_var, value="1").pack(side='left')
     tk.Radiobutton(frame_options, text="Não", variable=option_var, value="0").pack(side='left')
     
     # Diretório de salvar
-    tk.Label(root, text="Salvar detecções em:", anchor='w', width=30).grid(row=4, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Salvar detecções em:", anchor='w', width=30).grid(row=5, column=0, padx=pad_x, pady=pad_y, sticky='w')
     save_dir_var = tk.StringVar()
     save_dir_entry = tk.Entry(root, textvariable=save_dir_var, width=30)
-    save_dir_entry.grid(row=4, column=1, padx=pad_x, pady=pad_y)
+    save_dir_entry.grid(row=5, column=1, padx=pad_x, pady=pad_y)
 
     save_dir_var.set(save_dir)  # Preenche com o valor do config.txt
-    tk.Button(root, text="Procurar", command=browse_save_dir, width=10).grid(row=4, column=2, padx=pad_x, pady=pad_y)
+    tk.Button(root, text="Procurar", command=browse_save_dir, width=10).grid(row=5, column=2, padx=pad_x, pady=pad_y)
 
     # Caminho padrão abaixo do campo
-    tk.Label(root, text="Caminho Padrão: data\\outputs\\capturas", anchor='w', width=30).grid(row=5, column=1, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Caminho Padrão: data\\outputs\\capturas", anchor='w', width=30).grid(row=6, column=1, padx=pad_x, pady=pad_y, sticky='w')
 
     # Opção para "Não salvar detecções"
     save_detection_var = tk.BooleanVar(value=False)  # Inicia como "Não salvar"
     save_detection_checkbox = tk.Checkbutton(root, text="Não salvar detecções", variable=save_detection_var, command=toggle_save_dir)
-    save_detection_checkbox.grid(row=6, column=1, padx=pad_x, pady=pad_y, sticky='w')
+    save_detection_checkbox.grid(row=7, column=1, padx=pad_x, pady=pad_y, sticky='w')
+
+    # Tamanho da área de interesse
+    tk.Label(root, text="Tamanho da área de interesse:", anchor='w', width=30).grid(row=8, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    square_size_entry = tk.Entry(root, width=30)
+    square_size_entry.grid(row=8, column=1, padx=pad_x, pady=pad_y)
+    square_size_entry.insert(0, square_size)  # Preenche com o valor do config.txt
+    
+    # Localização em X
+    tk.Label(root, text="Localização em X:", anchor='w', width=30).grid(row=9, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    grid_x_entry = tk.Entry(root, width=30)
+    grid_x_entry.grid(row=9, column=1, padx=pad_x, pady=pad_y)
+    grid_x_entry.insert(0, grid_x)  # Preenche com o valor do config.txt
+    
+    # Localização em Y
+    tk.Label(root, text="Localização em Y:", anchor='w', width=30).grid(row=10, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    grid_y_entry = tk.Entry(root, width=30)
+    grid_y_entry.grid(row=10, column=1, padx=pad_x, pady=pad_y)
+    grid_y_entry.insert(0, grid_y)  # Preenche com o valor do config.txt
 
     # Parâmetros adicionais
     # Exposure value
-    tk.Label(root, text="Valor de exposição:", anchor='w', width=30).grid(row=7, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Valor de exposição:", anchor='w', width=30).grid(row=11, column=0, padx=pad_x, pady=pad_y, sticky='w')
     exposure_value_entry = tk.Entry(root, width=30)
-    exposure_value_entry.grid(row=7, column=1, padx=pad_x, pady=pad_y)
+    exposure_value_entry.grid(row=11, column=1, padx=pad_x, pady=pad_y)
     exposure_value_entry.insert(0, exposure_value)  # Preenche com o valor do config.txt
     
     # Percentual mínimo
-    tk.Label(root, text="Percentual Mínimo:", anchor='w', width=30).grid(row=8, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Percentual Mínimo:", anchor='w', width=30).grid(row=12, column=0, padx=pad_x, pady=pad_y, sticky='w')
     perc_top_entry = tk.Entry(root, width=30)
-    perc_top_entry.grid(row=8, column=1, padx=pad_x, pady=pad_y)
+    perc_top_entry.grid(row=12, column=1, padx=pad_x, pady=pad_y)
     perc_top_entry.insert(0, perc_top)  # Preenche com o valor do config.txt
     
     # Percentual máximo
-    tk.Label(root, text="Percentual Máximo:", anchor='w', width=30).grid(row=9, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Percentual Máximo:", anchor='w', width=30).grid(row=13, column=0, padx=pad_x, pady=pad_y, sticky='w')
     perc_bottom_entry = tk.Entry(root, width=30)
-    perc_bottom_entry.grid(row=9, column=1, padx=pad_x, pady=pad_y)
+    perc_bottom_entry.grid(row=13, column=1, padx=pad_x, pady=pad_y)
     perc_bottom_entry.insert(0, perc_bottom)  # Preenche com o valor do config.txt
     
     # Score mínimo
-    tk.Label(root, text="Score Mínimo:", anchor='w', width=30).grid(row=10, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Score Mínimo:", anchor='w', width=30).grid(row=14, column=0, padx=pad_x, pady=pad_y, sticky='w')
     min_score_entry = tk.Entry(root, width=30)
-    min_score_entry.grid(row=10, column=1, padx=pad_x, pady=pad_y)
+    min_score_entry.grid(row=14, column=1, padx=pad_x, pady=pad_y)
     min_score_entry.insert(0, min_score)  # Preenche com o valor do config.txt
     
     # Limite de centro
-    tk.Label(root, text="Limite de centro:", anchor='w', width=30).grid(row=11, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Limite de centro:", anchor='w', width=30).grid(row=15, column=0, padx=pad_x, pady=pad_y, sticky='w')
     limit_center_entry = tk.Entry(root, width=30)
-    limit_center_entry.grid(row=11, column=1, padx=pad_x, pady=pad_y)
+    limit_center_entry.grid(row=15, column=1, padx=pad_x, pady=pad_y)
     limit_center_entry.insert(0, limit_center)  # Preenche com o valor do config.txt
     
-    # Adicionando os novos campos
     # Segundos para rodar o modelo
-    tk.Label(root, text="Segundos para rodar o modelo:", anchor='w', width=30).grid(row=12, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Segundos para rodar o modelo:", anchor='w', width=30).grid(row=16, column=0, padx=pad_x, pady=pad_y, sticky='w')
     sec_run_model_entry = tk.Entry(root, width=30)
-    sec_run_model_entry.grid(row=12, column=1, padx=pad_x, pady=pad_y)
+    sec_run_model_entry.grid(row=16, column=1, padx=pad_x, pady=pad_y)
     sec_run_model_entry.insert(0, sec_run_model)  # Preenche com o valor do config.txt
     
     # Tempo de espera para tecla
-    tk.Label(root, text="Tempo de espera para tecla:", anchor='w', width=30).grid(row=13, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Tempo de espera para tecla:", anchor='w', width=30).grid(row=17, column=0, padx=pad_x, pady=pad_y, sticky='w')
     wait_key_entry = tk.Entry(root, width=30)
-    wait_key_entry.grid(row=13, column=1, padx=pad_x, pady=pad_y)
+    wait_key_entry.grid(row=17, column=1, padx=pad_x, pady=pad_y)
     wait_key_entry.insert(0, wait_key)  # Preenche com o valor do config.txt
     
     # Botão de confirmação
-    tk.Button(root, text="Confirmar", command=submit, width=20).grid(row=14, column=0, columnspan=4, pady=10)
+    tk.Button(root, text="Confirmar", command=submit, width=20).grid(row=18, column=0, columnspan=4, pady=10)
     
     # Chama a função para ajustar o estado do diretório de salvar
     toggle_save_dir()
     
     root.mainloop()
-    print(save_dir)
-    save_settings(config_path, exposure_value, perc_top, perc_bottom,
-                    min_score, limit_center, sec_run_model, wait_key, save_dir) 
     
-    return linha, device_name, device_path or None, option_visualize, exposure_value, perc_top, perc_bottom, \
-            min_score, limit_center, save_dir, sec_run_model, wait_key
+    # Salva as configurações (sem incluir o camera_backend)
+    save_settings(config_path, 
+                result['exposure_value'], 
+                result['perc_top'], 
+                result['perc_bottom'],
+                result['min_score'], 
+                result['limit_center'], 
+                result['sec_run_model'], 
+                result['wait_key'], 
+                result['save_dir'],
+                result['square_size'], 
+                result['grid_x'], 
+                result['grid_y']) 
+    
+    # Retorna os valores coletados incluindo o camera_backend
+    return (
+        result['linha'],
+        result['device_name'],
+        result['device_path'],
+        result['camera_backend'],
+        result['option_visualize'],
+        result['exposure_value'],
+        result['perc_top'],
+        result['perc_bottom'],
+        result['min_score'],
+        result['limit_center'],
+        result['save_dir'],
+        result['sec_run_model'],
+        result['wait_key'],
+        result['square_size'],
+        result['grid_x'],
+        result['grid_y']
+    )
 
 
 if __name__ == '__main__':
     # Exemplo de chamada da função
-    linha, device_name, device_path, option_visualize, exposure_value, perc_top, perc_bottom, min_score, limit_center, sec_run_model, wait_key, save_dir = start_application_interface()
+    config_path = r'app\config.txt'
+    (linha, device_name, device_path, camera_backend, option_visualize, exposure_value, 
+     perc_top, perc_bottom, min_score, limit_center, save_dir, 
+     sec_run_model, wait_key, square_size, grid_x, grid_y) = start_application_interface(config_path)
     # print("Linha:", linha)
     # print("Nome da Câmera/Vídeo:", device_name)
     # print("Caminho do dispositivo:", device_path)
@@ -289,4 +395,7 @@ if __name__ == '__main__':
     # print("Percentual Máximo:", perc_bottom)
     # print("Score Mínimo:", min_score)
     # print("Limite de centro:", limit_center)
+    # print("Tamanho da área:", square_size)
+    # print("Localização X:", grid_x)
+    # print("Localização Y:", grid_y)
     # print("Diretório de salvar:", save_dir if save_dir else "Não salvar detecções")

@@ -10,12 +10,16 @@ from .picos_rules_detection import rules_detection
 from .picos_run_model import run_model
 from .picos_trigger import trigger_frame, trigger_test
 from .picos_interface import save_settings
+from .picos_cropped import frame_cropped
+from src.class_camera_gx import GxiCapture
 
-
-def device_start(device_name, device_path):
+def device_start(device_name, camera_backend, device_path):
     
     print(f"Verificando device '{device_name}'")
-    device = cv2.VideoCapture(device_path) if device_path is not None else None
+    if camera_backend == 'GxCam':
+        device = GxiCapture(device_path) if device_path is not None else None
+    else:
+        device = cv2.VideoCapture(device_path) if device_path is not None else None
 
     if not device or not device.isOpened():
         print(f"Erro ao abrir a câmera '{device_name}'.")
@@ -57,9 +61,10 @@ def calculate_fps_video(frame_count, start_time_fps):
     return fps_display
 
 
-def device_start_capture(torch_device, device_name, device, device_fps, type_model, 
+def device_start_capture(camera_backend, torch_device, device_name, device, device_fps, type_model, 
                          model, visualize, sec_run_model, perc_top, perc_bottom, wait_key,
-                         config_path, exposure_value, min_score, limit_center, save_dir, linha):
+                         config_path, exposure_value, min_score, limit_center, save_dir, linha,
+                         cropped_image, square_size, grid_x, grid_y):
     
     frame_delay = int(device_fps * sec_run_model)  # Número de quadros para rodar o modelo
 
@@ -71,6 +76,8 @@ def device_start_capture(torch_device, device_name, device, device_fps, type_mod
     start_time_fps = time.time()
     restart_return_camera = True
     return_camera = None
+    device_width = int(device.get(cv2.CAP_PROP_FRAME_WIDTH))
+    device_height = int(device.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     print(f"\nAbrindo câmera '{device_name}'...")
     while True:
@@ -81,7 +88,11 @@ def device_start_capture(torch_device, device_name, device, device_fps, type_mod
             if return_camera != True:
                 restart_return_camera = True
 
-            return_camera, frame_original = device.read()
+            # Capturar a imagem
+            if camera_backend == "OpenCV":
+                return_camera, frame_original = device.read()
+            if camera_backend == "GxCam":
+                return_camera, frame_original = device.read()  
 
             if restart_return_camera == True:
                 restart_return_camera = False
@@ -93,76 +104,39 @@ def device_start_capture(torch_device, device_name, device, device_fps, type_mod
             if return_camera != False:
                 restart_return_camera = True
 
-            return_camera, frame_original = False, np.zeros((480, 640, 3), dtype=np.uint8)  # Frame preto para câmera 1
+            return_camera, frame_original = False, np.zeros((device_width, device_height, 3), dtype=np.uint8)  # Frame preto para câmera 1
 
             if restart_return_camera == True:
                 restart_return_camera = False
                 print(f"Falha ao capturar imagem da câmera '{device_name}'.")
 
-        # frame_gray = transform_image_gray(frame_original)
+        # Cortar caso necessário
+        if cropped_image == 1:
+            try:
+                frame_original = frame_cropped(frame_original, square_size, grid_x, grid_y, target_size=(640, 640))
+            except:
+                return_camera, frame_original = False, np.zeros((device_width, device_height, 3), dtype=np.uint8)
 
         # Teste do Trigger
-        result_trigger, trigger_top_value, trigger_bottom_value = trigger_test(frame_original, perc_top, perc_bottom)
+        frame_trigger,result_trigger, trigger_top_value, trigger_bottom_value = trigger_test(frame_original, perc_top, perc_bottom)
 
         # Tratamento da imagem com o Trigger
-        frame_trigger = trigger_frame(frame_original.copy(), trigger_top_value, trigger_bottom_value,
+        frame_trigger = trigger_frame(frame_trigger, trigger_top_value, trigger_bottom_value,
                                       perc_top, perc_bottom)
 
         if start_process == 'OFF':
             # Abrir a imagem de configuração
             frame_config = frame_trigger.copy()
 
-            cv2.rectangle(
-                frame_config, 
-                (0, 0), 
-                (frame_config.shape[1], 50),
-                (80, 43, 30), 
-                -1,
-            )
+            cv2.rectangle(frame_config,  (0, 0),  (frame_config.shape[1], 50), (80, 43, 30),  -1)
 
-            cv2.putText(
-                frame_config,
-                f'{str(start_process)} (O)',
-                (5, frame_config.shape[0] - 10),
-                cv2.FONT_HERSHEY_SIMPLEX, 
-                1,
-                (255, 255, 255),
-                2,
-                cv2.LINE_AA,
-            )
+            cv2.putText(frame_config, f'{str(start_process)} (O)', (5, frame_config.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,  1, (255, 255, 255), 2, cv2.LINE_AA)
             
-            cv2.putText(
-                frame_config,
-                f'Abertura superior: {int(perc_bottom*100)}%   (Q - W)', 
-                (10, 20),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.4,
-                (255, 255, 255),
-                1,
-                cv2.LINE_AA,
-            )
+            cv2.putText(frame_config, f'Abertura superior: {int(perc_bottom*100)}%   (Q - W)',  (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
             
-            cv2.putText(
-                frame_config, 
-                f'Abertura inferior: {int(perc_top*100)}%   (A - S)', 
-                (10, 40), 
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.4, 
-                (255, 255, 255), 
-                1, 
-                cv2.LINE_AA,
-            )
+            cv2.putText(frame_config,  f'Abertura inferior: {int(perc_top*100)}%   (A - S)',  (10, 40),  cv2.FONT_HERSHEY_SIMPLEX, 0.4,  (255, 255, 255),  1,  cv2.LINE_AA)
             
-            cv2.putText(
-                frame_config, 
-                f'Abertura da camera (iluminacao): {exposure_value}   (R - T)', 
-                (300, 20),
-                cv2.FONT_HERSHEY_SIMPLEX, 
-                0.4, 
-                (255, 255, 255), 
-                1, 
-                cv2.LINE_AA,
-            )
+            cv2.putText(frame_config,  f'Abertura da camera (iluminacao): {exposure_value}   (R - T)',  (300, 20), cv2.FONT_HERSHEY_SIMPLEX,  0.4,  (255, 255, 255),  1,  cv2.LINE_AA)
 
             # Exibe o quadro ao vivo
             if visualize == 1:
@@ -174,17 +148,7 @@ def device_start_capture(torch_device, device_name, device, device_fps, type_mod
                 # Ligar o detector
                 if key == ord('o') or key == ord('O'):
                     start_process = 'ON'
-                    save_settings(
-                        config_path, 
-                        exposure_value, 
-                        perc_top, 
-                        perc_bottom, 
-                        min_score, 
-                        limit_center, 
-                        sec_run_model, 
-                        wait_key, 
-                        save_dir
-                    )
+                    save_settings(config_path, exposure_value, perc_top, perc_bottom, min_score,limit_center, sec_run_model, wait_key, save_dir,square_size, grid_x, grid_y)
                     print('Captura ligada')
                     print('-----------------------------------')
 
@@ -221,16 +185,7 @@ def device_start_capture(torch_device, device_name, device, device_fps, type_mod
 
             # Exibe o quadro ao vivo
             if visualize == 1:
-                cv2.putText(
-                    frame_trigger,
-                    f'{str(start_process)} (O)',
-                    (5, frame_trigger.shape[0] - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (255, 255, 255),
-                    2,
-                    cv2.LINE_AA,
-                )
+                cv2.putText(frame_trigger, f'{str(start_process)} (O)', (5, frame_trigger.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
                 cv2.imshow(f'Ao vivo: {device_name}', frame_trigger)
 
             # Para ativar o trigger, ele tem que ficar off pelo menos uma vez (para não contar o mesmo biscoito 2x)
