@@ -129,3 +129,67 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, min_score, 
     )
 
     return frame, total_detections
+
+def no_rules_detection(frame, detections_sorted, perc_top, perc_bottom, min_score, limit_center):
+    total_detections = 0  # Contador total de detecções
+
+    for idx, detection in enumerate(detections_sorted):
+        score = detection[1]
+        x_min, y_min, x_max, y_max = detection[0]
+
+        center_x = int((x_min + x_max) // 2)
+        center_y = int((y_min + y_max) // 2)
+
+        total_detections += 1
+
+        # Marca o centro com um círculo vermelho
+        cv2.circle(
+            frame,
+            (center_x, center_y),
+            7,
+            (0, 0, 255),
+            -1,
+        )
+
+        # Círculo azul indicando o raio que antes era o limit_center
+        cv2.circle(
+            frame,
+            (center_x, center_y),
+            limit_center,
+            (255, 0, 0),
+            1,
+        )
+
+        # Número da detecção
+        cv2.putText(
+            frame,
+            str(total_detections),
+            (center_x - 6, center_y + 3),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.35,
+            (255, 255, 255),
+            1,
+        )
+
+    # Área superior de fundo do texto
+    cv2.rectangle(
+        frame,
+        (0, 0),
+        (frame.shape[1], 40),
+        (80, 43, 30),
+        -1,
+    )
+
+    # Texto de total
+    text = f'Total de Biscoitos: {total_detections}'
+    cv2.putText(
+        frame,
+        text,
+        (10, 30),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (255, 255, 255),
+        2,
+    )
+
+    return frame, total_detections

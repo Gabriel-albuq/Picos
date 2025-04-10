@@ -18,7 +18,9 @@ dependencies = [
     "isort (>=6.0.0,<7.0.0)",
     "pytest (>=8.3.4,<9.0.0)",
     "taskipy (>=1.14.1,<2.0.0)",
-    "gxipy @ file:///C:/Users/ekt92712/Documents/ProjetosPython/PICOS/Camera/Galaxy_Linux_Python_2.0.2106.9041/api"
+    "gxipy @ file:///C:/Users/ekt92712/Documents/ProjetosPython/PICOS/Camera/Galaxy_Linux_Python_2.0.2106.9041/api",
+    "mkdocs (>=1.6.1,<2.0.0)",
+    "mkdocs-material (>=9.6.11,<10.0.0)"
 ]
 
 [[tool.poetry.source]]

@@ -6,7 +6,7 @@ from datetime import datetime
 import cv2
 import numpy as np
 
-from .picos_rules_detection import rules_detection
+from .picos_rules_detection import rules_detection, no_rules_detection
 from .picos_run_model import run_model
 from .picos_trigger import trigger_frame, trigger_test
 from .picos_interface import save_settings
@@ -113,12 +113,12 @@ def device_start_capture(camera_backend, torch_device, device_name, device, devi
         # Cortar caso necessário
         if cropped_image == 1:
             try:
-                frame_original = frame_cropped(frame_original, square_size, grid_x, grid_y, target_size=(640, 640))
+                frame_original = frame_cropped(frame_original.copy(), square_size, grid_x, grid_y, target_size=(640, 640))
             except:
                 return_camera, frame_original = False, np.zeros((device_width, device_height, 3), dtype=np.uint8)
 
         # Teste do Trigger
-        frame_trigger,result_trigger, trigger_top_value, trigger_bottom_value = trigger_test(frame_original, perc_top, perc_bottom)
+        frame_trigger, result_trigger, trigger_top_value, trigger_bottom_value = trigger_test(frame_original.copy(), perc_top, perc_bottom)
 
         # Tratamento da imagem com o Trigger
         frame_trigger = trigger_frame(frame_trigger, trigger_top_value, trigger_bottom_value,
@@ -215,6 +215,8 @@ def device_start_capture(camera_backend, torch_device, device_name, device, devi
                     detections_sorted = run_model(torch_device, type_model, model, frame_original)
                     frame_detect, total_detections = rules_detection(frame_original.copy(), detections_sorted,perc_top, perc_bottom,
                                                                      min_score, limit_center)
+                    # frame_detect, total_detections = no_rules_detection(frame_original.copy(), detections_sorted,perc_top, perc_bottom,
+                    #                                                  min_score, limit_center)
                     if total_detections > 0:
                         if visualize == 1:
                             cv2.imshow(f'Aplicacao do Modelo: : {device_name}', frame_detect)

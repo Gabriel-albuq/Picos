@@ -73,7 +73,7 @@ def load_settings(config_path):
 
 def save_settings(config_path, perc_top, 
                  perc_bottom, min_score, limit_center, 
-                 save_dir, square_size, grid_x, grid_y, crop_image):
+                 save_dir, crop_image, square_size, grid_x, grid_y):
     """Função para salvar as configurações atuais diretamente nas variáveis no arquivo .txt."""
     arquivo = config_path
     try:

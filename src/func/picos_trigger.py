@@ -1,6 +1,8 @@
 ﻿import cv2
 import numpy as np
 
+DESC1 = 300
+DESC2 = 80
 
 def trigger_test(frame, perc_top, perc_bottom):
     """
@@ -25,17 +27,15 @@ def trigger_test(frame, perc_top, perc_bottom):
     line_limit_bottom = int(frame_height * perc_bottom)
 
     ### TOP - Verificando a média das cores SUPERIORES ###
-    x1, y1 = (int((frame_width / 2) - 300), line_limit_top)  # Posição do canto superior esquerdo
-    x2, y2 = (int((frame_width / 2) - 80), line_limit_top + 20)   # Posição do canto inferior direito
-    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
+    x1, y1 = (int((frame_width / 2) - DESC1), line_limit_top)  # Posição do canto superior esquerdo
+    x2, y2 = (int((frame_width / 2) - DESC2), line_limit_top + 20)   # Posição do canto inferior direito
 
     cropped_image_top = frame.copy()[y1:y2, x1:x2]   # Cortando a região de interesse (ROI)
     mean_color_top = cv2.mean(cropped_image_top)[:3]  # Apenas os canais BGR
 
     ### BOTTOM - Verificando a média das cores INFERIORES ###
-    x2, y2 = (int((frame_width / 2) - 80), line_limit_bottom,)  # Posição do canto inferior direito
-    x1, y1 = (int((frame_width / 2) - 300), line_limit_bottom - 20)  # Posição do canto superior esquerdo
-    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
+    x2, y2 = (int((frame_width / 2) - DESC2), line_limit_bottom,)  # Posição do canto inferior direito
+    x1, y1 = (int((frame_width / 2) - DESC1), line_limit_bottom - 20)  # Posição do canto superior esquerdo
 
     cropped_image_bottom = frame.copy()[y1:y2, x1:x2]   # Cortando a região de interesse (ROI)
     mean_color_bottom = cv2.mean(cropped_image_bottom)[:3]   # Apenas os canais BGR
@@ -84,6 +84,16 @@ def trigger_frame(frame, trigger_top_value, trigger_bottom_value, perc_top, perc
     # Define as posições das linhas
     line_limit_top = int(frame_height * perc_top)
     line_limit_bottom = int(frame_height * perc_bottom)
+
+    ### TOP - Trigger
+    x1, y1 = (int((frame_width / 2) - DESC1), line_limit_top)  # Posição do canto superior esquerdo
+    x2, y2 = (int((frame_width / 2) - DESC2), line_limit_top + 20)   # Posição do canto inferior direito
+    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
+
+    ### BOTTOM - Trigger
+    x2, y2 = (int((frame_width / 2) - DESC2), line_limit_bottom,)  # Posição do canto inferior direito
+    x1, y1 = (int((frame_width / 2) - DESC1), line_limit_bottom - 20)  # Posição do canto superior esquerdo
+    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
 
     # Copiar a imagem para aplicar as áreas escurecidas
     overlay = frame.copy()
