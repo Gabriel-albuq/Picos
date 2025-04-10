@@ -20,7 +20,8 @@ dependencies = [
     "taskipy (>=1.14.1,<2.0.0)",
     "gxipy @ file:///C:/Users/ekt92712/Documents/ProjetosPython/PICOS/Camera/Galaxy_Linux_Python_2.0.2106.9041/api",
     "mkdocs (>=1.6.1,<2.0.0)",
-    "mkdocs-material (>=9.6.11,<10.0.0)"
+    "mkdocs-material (>=9.6.11,<10.0.0)",
+    "mkdocstrings (>=0.29.1,<0.30.0)"
 ]
 
 [[tool.poetry.source]]

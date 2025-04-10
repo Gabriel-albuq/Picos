@@ -13,9 +13,6 @@ nav:
   - Instalação: installation.md
   - Uso: usage.md
   - Modelo: model.md
-  - Dataset: dataset.md
-  - API: api.md
-  - Solução de Problemas: troubleshooting.md
 
 markdown_extensions:
   - admonition

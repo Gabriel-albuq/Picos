@@ -116,16 +116,22 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, min_score, 
          2,
     )
 
-    text_position = (640 + 10, 30)
+    text_position = (0, 0)
     text = f'Total de Biscoitos: {total_detections}'
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 1
+    thickness = 2
+    (text_width, text_height), _ = cv2.getTextSize(text, font, font_scale, thickness)
+    text_x = 10  # margem esquerda
+    text_y = int((40 + text_height) / 2)  # centralizado verticalmente
     cv2.putText(
         frame, 
         text, 
-        text_position, 
-        cv2.FONT_HERSHEY_SIMPLEX, 
-        1, 
+        (text_x, text_y), 
+        font, 
+        font_scale, 
         (255, 255, 255), 
-        2,
+        thickness,
     )
 
     return frame, total_detections

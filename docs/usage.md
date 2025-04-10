@@ -4,50 +4,62 @@ Este guia descreve como utilizar a **Plataforma Inteligente de Contagem de Objet
 
 ## 🚀 Passos para Utilização
 
-### 1. Clonando o Repositório
+### 1. Descompactar os arquivos
 
-Primeiro, clone o repositório do projeto:
+  Crie uma pasta para o projeto e descompacte os arquivos.
 
-```bash
-git clone https://github.com/seu-usuario/picos.git
-cd picos
-```
+### 2. Instalando o ambiente virtual
+  Siga em Passo a Passo em: [Instalação](installation.md)
 
-### 2. Instalando Dependências
-    
-Para instalar as dependências necessárias, execute o seguinte comando:
+### 3. Rodando o programa
+  Para rodar o **PICOS**, execute o seguinte comando:
 
-```bash
-poetry install
-```
+  ```bash
+  python app/run_picos.py
+  ```
 
-### 3. Parâmetros Configuráveis
-    
-Os parâmetros configuráveis estão no arquivo `app/config.txt`, mas podem ser alterado no inicio da aplicação, seja na interface ou já dentro da própria câmera.
-Sempre que a a detecção para de OFF para ON, os parâmetros atuais são salvos no arquivo `app/config.txt`, para que quando o aplicativo seja iniciado, as últimas configurações sejam carregadas.
+  Abrirá a seguinte tela:
 
-- **exposure_value** = `0`  
-  *Exposição da câmera* (pode ser alterado quando a câmera estiver aberta).
+  ![Tela inicial](data_doc/tela1.png)
 
-- **perc_min** = `0.4`  
-  *Posição da linha superior do trigger* (pode ser alterado quando a câmera estiver aberta).
+  A tela serve para configurar os parâmetros iniciais do programa, são eles:
 
-- **perc_max** = `0.8`  
-  *Posição da linha inferior do trigger* (pode ser alterado quando a câmera estiver aberta).
+  **Digite a linha**: Nome da linha em que o programa está rodando
 
-- **min_score** = `0.5`  
-  *Mínimo de certeza para considerar um objeto como válido*.
+  **Nome da Câmera/Vídeo**: Nome que o usuário quer dar a Câmera ou Vídeo.
 
-- **limit_center** = `8`  
-  *Tamanho do círculo ao redor do centro da marcação onde as sobreposições serão desconsideradas*.
+  
+  **Câmera/Vídeo**: Digitar o número da câmera (0, 1, 2...) ou escolher o caminho do vídeo.
+  
+  **Backend da Câmera**: Decide qual classe irá ser utilizada para abrir a imagem, marque OpenCV para câmeras como WebCam ou para abrir vídeos, e use GxCam para abrir câmeras tipo Gx.
+  
+  **Visualizar predições**: Marque 'Sim' para mostrar a imagem dos resultados na tela, e 'Não' para rodar sem interface.
+  
+  **Salvar detecções em**: Local onde ficarão salvas as imagens e o arquivo csv com os resultados. Marque o campo 'Não salvar detecções' caso não queria salvar.
+  
+  **Cortar imagem**: Marque 'sim' caso a dimensão da imagem seja diferente de 640x640 e 'não' caso seja igual.
+  
+  **Tamanho da área de interesse**: Utilizado para cortar a imagem, representa o tamanho do retângulo, e é definido em src/config_cropped_video.py. Caso Cortar 
+  Imagem = 'não', não é necessário se preocupar com esse campo
+  
+  **Localização em X**: Utilizado para cortar a imagem, representa a localização em X do retângulo, e é definido em src/config_cropped_video.py. Caso Cortar Imagem = 'não', não é necessário se preocupar com esse campo
+  
+  **Localização em Y**: Utilizado para cortar a imagem, representa a localização em Y do retângulo é definido em src/config_cropped_video.py. Caso Cortar Imagem = 'não', não é necessário se preocupar com esse campo
+  
+  **Percentual Máximo**: Indica a posição inicial da porcentagem da altura em que a linha de trigger superior vai estar. Pode ser alterada após iniciar.
+  
+  **Percentual Mínimo**: Indica a posição inicial da porcentagem da altura em que a linha de trigger inferior vai estar. Pode ser alterada após iniciar.
+  
+  **Score Mínimo**: Indica a porcentagem mínima de certeza de que aquilo é um objeto para ser reconhecido pelo modelo.
+  
+  **Limite de Centro**: Ferramenta utilizada para ignorar detecções duplicadas. O Limite de Centro cria um raio do tamanho definido, onde qualquer outra detecção dentro dele é ignorada.
 
-- **save_dir** = `data/outputs/capturas`  
-  *Pasta onde as detecções serão salvas*.
+  Ao clicar em confirmar é aberta a Câmera ou o Vídeo no modo de configuração, permitindo ser alterado o Percentual Máximo (Q-W) e Percentual Mínimo (A-S). Apertando na tecla O o programa ligará o modelo para detectar.
 
-### 2. Uso
+  ![Tela de configuração da tela](data_doc/tela2.png)
 
-Para rodar o **PICOS**, execute o seguinte comando:
+  O modelo só roda quando o trigger é ativado. O trigger funciona pegando as cores que passam pelo retângulo amarelo e verificando se a média das cores dentro dele se aproximam do marrom. Quando o trigger é ativado, ele só pode ser ativado novamente quando passar uma rodada onde não tem biscoitos (cor do retangulo se aproxima da cor da esteira).
 
-```bash
-python app/run_picos.py
-```
+  OBS: O modelo foi configurado inicialmente para rodar com a WebCam para apenas uma fileira. Para o GxCam é necessário configurar as regras de detecção e também criar uma regra para separar o lado esquerdo e o lado direito.
+
+  ![Modelo rodando (necessita ajustar a configuração)](data_doc/tela2.png)

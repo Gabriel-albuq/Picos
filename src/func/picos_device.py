@@ -136,7 +136,7 @@ def device_start_capture(camera_backend, torch_device, device_name, device, devi
             
             cv2.putText(frame_config,  f'Abertura inferior: {int(perc_top*100)}%   (A - S)',  (10, 40),  cv2.FONT_HERSHEY_SIMPLEX, 0.4,  (255, 255, 255),  1,  cv2.LINE_AA)
             
-            cv2.putText(frame_config,  f'Abertura da camera (iluminacao): {exposure_value}   (R - T)',  (300, 20), cv2.FONT_HERSHEY_SIMPLEX,  0.4,  (255, 255, 255),  1,  cv2.LINE_AA)
+            #cv2.putText(frame_config,  f'Abertura da camera (iluminacao): {exposure_value}   (R - T)',  (300, 20), cv2.FONT_HERSHEY_SIMPLEX,  0.4,  (255, 255, 255),  1,  cv2.LINE_AA)
 
             # Exibe o quadro ao vivo
             if visualize == 1:
